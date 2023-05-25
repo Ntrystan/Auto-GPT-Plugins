@@ -258,8 +258,10 @@ class TestEmailPlugin(unittest.TestCase):
 
         # Test read_emails function
         result = read_emails("inbox", "UNSEEN")
-        expected = "There are no Emails in your folder `inbox` "
-        expected += "when searching with imap command `UNSEEN`"
+        expected = (
+            "There are no Emails in your folder `inbox` "
+            + "when searching with imap command `UNSEEN`"
+        )
         assert result == expected
 
         # Check if the IMAP object was created and used correctly
@@ -362,10 +364,10 @@ class TestEmailPlugin(unittest.TestCase):
         mock_imap.return_value.search.assert_called_once_with(None, "UNSEEN")
         mock_imap.return_value.fetch.assert_called_once_with(b"1", "(BODY.PEEK[])")
 
-    def side_effect_for_open(original_open, file_path, *args, **kwargs):
+    def side_effect_for_open(self, file_path, *args, **kwargs):
         if file_path == MOCK_ATTACHMENT_PATH:
             return mock_open(read_data=b"file_content").return_value
-        return original_open(file_path, *args, **kwargs)
+        return self(file_path, *args, **kwargs)
 
     original_open = open
     side_effect_with_original_open = partial(side_effect_for_open, original_open)

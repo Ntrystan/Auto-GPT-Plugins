@@ -11,21 +11,21 @@ from email.message import EmailMessage
 
 
 def bothEmailAndPwdSet() -> bool:
-    return True if os.getenv("EMAIL_ADDRESS") and os.getenv("EMAIL_PASSWORD") else False
+    return bool(os.getenv("EMAIL_ADDRESS") and os.getenv("EMAIL_PASSWORD"))
 
 
 def getSender():
-    email_sender = os.getenv("EMAIL_ADDRESS")
-    if not email_sender:
+    if email_sender := os.getenv("EMAIL_ADDRESS"):
+        return email_sender
+    else:
         return "Error: email not sent. EMAIL_ADDRESS not set in environment."
-    return email_sender
 
 
 def getPwd():
-    email_password = os.getenv("EMAIL_PASSWORD")
-    if not email_password:
+    if email_password := os.getenv("EMAIL_PASSWORD"):
+        return email_password
+    else:
         return "Error: email not sent. EMAIL_PASSWORD not set in environment."
-    return email_password
 
 
 def send_email(to: str, subject: str, body: str) -> str:
@@ -61,8 +61,7 @@ def send_email_with_attachment_internal(
     msg["From"] = email_sender
     msg["To"] = to
 
-    signature = os.getenv("EMAIL_SIGNATURE")
-    if signature:
+    if signature := os.getenv("EMAIL_SIGNATURE"):
         message += f"\n{signature}"
 
     msg.set_content(message)
@@ -78,9 +77,16 @@ def send_email_with_attachment_internal(
                 fp.read(), maintype=maintype, subtype=subtype, filename=attachment
             )
 
-    draft_folder = os.getenv("EMAIL_DRAFT_MODE_WITH_FOLDER")
-
-    if not draft_folder:
+    if draft_folder := os.getenv("EMAIL_DRAFT_MODE_WITH_FOLDER"):
+        conn = imap_open(draft_folder, email_sender, email_password)
+        conn.append(
+            draft_folder,
+            "",
+            imaplib.Time2Internaldate(time.time()),
+            str(msg).encode("UTF-8"),
+        )
+        return f"Email went to {draft_folder}!"
+    else:
         smtp_host = os.getenv("EMAIL_SMTP_HOST")
         smtp_port = os.getenv("EMAIL_SMTP_PORT")
         # send email
@@ -91,15 +97,6 @@ def send_email_with_attachment_internal(
             smtp.send_message(msg)
             smtp.quit()
         return f"Email was sent to {to}!"
-    else:
-        conn = imap_open(draft_folder, email_sender, email_password)
-        conn.append(
-            draft_folder,
-            "",
-            imaplib.Time2Internaldate(time.time()),
-            str(msg).encode("UTF-8"),
-        )
-        return f"Email went to {draft_folder}!"
 
 
 def read_emails(imap_folder: str = "inbox", imap_search_command: str = "UNSEEN") -> str:
@@ -137,10 +134,7 @@ def read_emails(imap_folder: str = "inbox", imap_search_command: str = "UNSEEN")
 
     messages = []
     for num in search_data[0].split():
-        if mark_as_seen:
-            message_parts = "(RFC822)"
-        else:
-            message_parts = "(BODY.PEEK[])"
+        message_parts = "(RFC822)" if mark_as_seen else "(BODY.PEEK[])"
         _, msg_data = conn.fetch(num, message_parts)
         for response_part in msg_data:
             if isinstance(response_part, tuple):
@@ -196,14 +190,13 @@ def imap_open(
 
 
 def get_email_body(msg: email.message.Message) -> str:
-    if msg.is_multipart():
-        for part in msg.walk():
-            content_type = part.get_content_type()
-            content_disposition = str(part.get("Content-Disposition"))
-            if content_type == "text/plain" and "attachment" not in content_disposition:
-                return part.get_payload(decode=True).decode()
-    else:
+    if not msg.is_multipart():
         return msg.get_payload(decode=True).decode()
+    for part in msg.walk():
+        content_type = part.get_content_type()
+        content_disposition = str(part.get("Content-Disposition"))
+        if content_type == "text/plain" and "attachment" not in content_disposition:
+            return part.get_payload(decode=True).decode()
 
 
 def enclose_with_quotes(s):
@@ -214,10 +207,7 @@ def enclose_with_quotes(s):
     is_enclosed = s.startswith(("'", '"')) and s.endswith(("'", '"'))
 
     # If string has whitespace and is not enclosed by quotes, enclose it with double quotes
-    if has_whitespace and not is_enclosed:
-        return f'"{s}"'
-    else:
-        return s
+    return f'"{s}"' if has_whitespace and not is_enclosed else s
 
 
 def split_imap_search_command(input_string):

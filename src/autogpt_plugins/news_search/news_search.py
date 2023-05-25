@@ -43,14 +43,8 @@ class NewsSearch(object):
             list(str): A list of top news headlines aggregated from all categories.
         """
         with concurrent.futures.ThreadPoolExecutor() as tp:
-            futures = []
-            for cat in categories:
-                futures.append(
-                    tp.submit(self.news_headlines_search, category=cat, query=query)
-                )
-
-            aggregated_headlines = []
-            for fut in concurrent.futures.wait(futures)[0]:
-                aggregated_headlines.append(fut.result())
-
-            return aggregated_headlines
+            futures = [
+                tp.submit(self.news_headlines_search, category=cat, query=query)
+                for cat in categories
+            ]
+            return [fut.result() for fut in concurrent.futures.wait(futures)[0]]
