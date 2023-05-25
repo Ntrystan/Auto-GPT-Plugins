@@ -5,14 +5,14 @@ import requests
 
 
 def is_api_key_set() -> bool:
-    return True if os.getenv("SCENEX_API_KEY") else False
+    return bool(os.getenv("SCENEX_API_KEY"))
 
 
 def get_api_key():
-    api_key = os.getenv("SCENEX_API_KEY")
-    if not api_key:
+    if api_key := os.getenv("SCENEX_API_KEY"):
+        return api_key
+    else:
         return "Error: SCENEX_API_KEY not set in environment."
-    return api_key
 
 
 Algorithm = Union["Aqua", "Bolt", "Comet", "Dune", "Ember", "Flash"]

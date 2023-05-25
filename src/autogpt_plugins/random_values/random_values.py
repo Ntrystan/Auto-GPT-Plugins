@@ -46,11 +46,7 @@ def _random_number(min=0, max=65535, count=1) -> str:
     if not (1 <= count <= 65535):
         raise ValueError("count must be between 1 and 65535")
 
-    # Do the thing
-    random_numbers = []
-    for _ in range(count):
-        random_numbers.append(random.randint(min, max))
-
+    random_numbers = [random.randint(min, max) for _ in range(count)]
     return json.dumps(random_numbers)
 
 
@@ -77,11 +73,7 @@ def _make_uuids(count=1) -> str:
     if not (1 <= count <= 65535):
         raise ValueError("count must be between 1 and 65535")
 
-    # Do the thing
-    uuids = []
-    for _ in range(count):
-        uuids.append(str(uuid.uuid4()))
-
+    uuids = [str(uuid.uuid4()) for _ in range(count)]
     return json.dumps(uuids)
 
 
@@ -116,13 +108,10 @@ def _generate_string(length=10, count=1) -> str:
     if not (1 <= count <= 65535):
         raise ValueError("count must be between 1 and 65535")
 
-    # Do the thing
-    strings = []
-    for _ in range(count):
-        strings.append(
-            "".join(random.choice(string.ascii_letters) for i in range(length))
-        )
-
+    strings = [
+        "".join(random.choice(string.ascii_letters) for _ in range(length))
+        for _ in range(count)
+    ]
     return json.dumps(strings)
 
 
@@ -157,16 +146,15 @@ def _generate_password(length=16, count=1) -> str:
     if not (1 <= count <= 65535):
         raise ValueError("count must be between 1 and 65535")
 
-    # Do the thing
-    passwords = []
-    for _ in range(count):
-        passwords.append(
-            "".join(
-                random.choice(string.ascii_letters + string.digits + string.punctuation)
-                for i in range(length)
+    passwords = [
+        "".join(
+            random.choice(
+                string.ascii_letters + string.digits + string.punctuation
             )
+            for _ in range(length)
         )
-
+        for _ in range(count)
+    ]
     return json.dumps(passwords)
 
 
@@ -193,9 +181,5 @@ def _generate_placeholder_text(sentences=1) -> str:
     if not (1 <= sentences <= 65535):
         raise ValueError("sentences must be between 1 and 65535")
 
-    # Do the thing
-    strings = []
-    for _ in range(sentences):
-        strings.append(lorem.get_sentence())
-
+    strings = [lorem.get_sentence() for _ in range(sentences)]
     return json.dumps(strings)
